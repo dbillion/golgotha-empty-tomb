@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0d0c">
+<meta name="description" content="Golgotha and the Empty Tomb: two Blender-built scenes you can explore in 3D, with weather, season and time-of-day controls.">
+<title>Golgotha and the Empty Tomb | Interactive 3D scenes</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="stage"></div>
+    <video id="vid" controls loop muted playsinline></video>
+
+    <header id="top">
+      <h1>Golgotha <span>&amp; the Empty Tomb</span></h1>
+      <div class="group" role="group" aria-label="Scene">
+        <button id="bG" class="on">Golgotha</button>
+        <button id="bT">Empty Tomb</button>
+      </div>
+      <div class="group" role="group" aria-label="View mode">
+        <button id="bV3" class="on">3D</button>
+        <button id="bVV">Video</button>
+      </div>
+      <button id="bHud" class="on" aria-expanded="true" aria-controls="hud">Controls</button>
+    </header>
+
+    <div id="chip" aria-live="polite"></div>
+
+    <footer id="foot">
+      <button id="bPlay" aria-label="Play or pause">Pause</button>
+      <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Timeline">
+      <span id="time">0.0 / 12.0 s</span>
+    </footer>
+
+    <div id="note" role="status"></div>
+    <div id="load">Loading scene…</div>
+  </main>
+
+  <aside id="hud" aria-label="Environment controls">
+    <div class="hudhead"><strong>Environment</strong><button id="bReset" class="ghost">Reset all</button></div>
+
+    <section>
+      <h2>Weather</h2>
+      <div class="chips" id="cWeather"></div>
+    </section>
+    <section>
+      <h2>Season <small id="seasonHint"></small></h2>
+      <div class="chips" id="cSeason"></div>
+    </section>
+    <section>
+      <h2>Time of day <output id="todOut">as filmed</output></h2>
+      <input id="tod" type="range" min="0" max="24" step="0.1" value="6" aria-label="Time of day">
+      <div class="chips" id="cTod"></div>
+    </section>
+    <section id="camSec">
+      <h2>Camera</h2>
+      <div class="chips" id="cCam"></div>
+      <label class="row"><input type="checkbox" id="kAuto"> Slow auto-orbit</label>
+    </section>
+    <section>
+      <h2>Scene</h2>
+      <label class="row"><input type="checkbox" id="kClouds" checked> Clouds</label>
+      <label class="row" id="rowRays"><input type="checkbox" id="kRays" checked> God rays</label>
+      <label class="row"><input type="checkbox" id="kSound"> Ambient sound (generated, no files)</label>
+      <h2>Quality</h2>
+      <div class="chips" id="cQual"></div>
+    </section>
+    <section class="actions">
+      <button id="bShot">Save screenshot</button>
+      <button id="bFull">Fullscreen</button>
+      <button id="bLink">Copy link</button>
+    </section>
+    <p class="fine">Drag to look around, pinch or scroll to zoom. Keys: Space play/pause, H hide controls, F fullscreen.</p>
+  </aside>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
