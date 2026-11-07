@@ -115,6 +115,18 @@ let cur = null, root = null, lights = {}, rays = [], clouds = [], tints = [], st
 const loader = new GLTFLoader(), cache = {};
 const tmpV = new THREE.Vector3();
 
+/* dragging / pinching / scrolling while the film camera plays hands control to the viewer, starting from the film camera's pose */
+function takeControl() {
+  if (!useFilm || !mode3d || !filmCam) return;
+  const p = new THREE.Vector3(), q = new THREE.Quaternion(), f = new THREE.Vector3(0, 0, -1);
+  filmCam.getWorldPosition(p); filmCam.getWorldQuaternion(q); f.applyQuaternion(q);
+  orbitCam.position.copy(p); controls.target.copy(p).addScaledVector(f, 12);
+  useFilm = false; st.cam = 'Free orbit'; controls.update(); resize(); refreshChips();
+}
+renderer.domElement.addEventListener('pointerdown', takeControl, true);
+renderer.domElement.addEventListener('wheel', takeControl, { capture: true, passive: true });
+window.viewer = { orbitCam, controls, st };
+
 function skyTexture(cols) {
   const c = document.createElement('canvas'); c.width = 2; c.height = 256;
   const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
@@ -267,7 +279,7 @@ function applyTime() {
   if (cur !== 'tomb') return;
   const burst = ramp(t, 2.6, 4.6);
   lights.tomb.intensity = 3 + 12 * ramp(t, 2, 3.8);
-  lights.burst.intensity = 60 * ramp(t, 2.5, 3.6) * (1 - 0.45 * ramp(t, 4.5, 6));
+  lights.burst.intensity = 40 * ramp(t, 2.5, 3.6) * (1 - 0.45 * ramp(t, 4.5, 6));
   lights.sun.intensity = LOOK.sunI * (0.8 + 0.4 * burst);
   lights.hemi.intensity = LOOK.hemiI * (0.6 + 0.5 * burst);
   const op = 0.11 * ramp(t, 2.6, 3.6) * (1 - 0.35 * ramp(t, 4.5, 8)) * (1 + 0.25 * LOOK.night);
