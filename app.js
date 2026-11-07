@@ -258,6 +258,21 @@ function applyTints() {
     if (kind === 'leaf' && W.fx === 'snow') m.color.lerp(c3('#e8eef2'), 0.35);
   });
 }
+/* display mode: solid / wireframe / x-ray (walls, rock and terrain turn see-through) */
+const SOLIDISH = /wall|rock|mound|lintel|tower|shelf|house|boulder|mass|stone|tomb|cave|roof/i;
+let viewMode = 'solid', viewMats = new Map();
+function applyView() {
+  if (!root) return;
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+      if (!viewMats.has(m)) viewMats.set(m, { w: m.wireframe, t: m.transparent, o: m.opacity, d: m.depthWrite });
+      const b = viewMats.get(m), see = viewMode === 'xray' && SOLIDISH.test(o.name + ' ' + (m.name || ''));
+      m.wireframe = viewMode === 'wire' ? true : b.w;
+      m.transparent = see ? true : b.t; m.opacity = see ? 0.16 : b.o; m.depthWrite = see ? false : b.d; m.needsUpdate = true;
+    });
+  });
+}
 function applyLook() {
   LOOK = computeLook();
   if (scene.background && scene.background.dispose) scene.background.dispose();
@@ -307,7 +322,7 @@ async function load(key) {
   root = gltf.scene; scene.add(root);
   filmCam = null; root.traverse(o => { if (o.isCamera && !filmCam) filmCam = o; if (/^cloud/i.test(o.name)) clouds.push(o); });
   if (filmCam) { filmFov = filmCam.fov || 40; filmCam.near = 0.05; filmCam.far = 4000; }
-  collectTints();
+  collectTints(); viewMats = new Map(); applyView();
   mixer = new THREE.AnimationMixer(root);
   dur = 0; gltf.animations.forEach(c => { mixer.clipAction(c).play(); dur = Math.max(dur, c.duration); });
   dur = dur || 12; t = 0;
@@ -382,7 +397,7 @@ function buildCamChips() {
 }
 function refreshChips() {
   const mark = (id, val) => document.querySelectorAll('#' + id + ' button').forEach(b => { const on = b.dataset.k === String(val); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-  mark('cWeather', st.weather); mark('cSeason', st.season); mark('cCam', st.cam); mark('cQual', st.quality);
+  mark('cWeather', st.weather); mark('cSeason', st.season); mark('cCam', st.cam); mark('cQual', st.quality); mark('cView', viewMode);
   mark('cTod', st.tod === null ? 'film' : (TOD_PRESETS.find(p => +p[0] === st.tod) || [''])[0]);
 }
 const hhmm = h => { const m = Math.round((h % 24) * 60); return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
@@ -411,6 +426,7 @@ function readHash() {
 mkChips('cWeather', Object.entries(WEATHER).map(([k, v]) => [k, v.name]), k => { st.weather = k; if (k === 'storm' && nextBolt > 2) nextBolt = 1.5; applyLook(); });
 mkChips('cSeason', Object.entries(SEASONS).map(([k, v]) => [k, v.name.replace(' (Passover)', '')]), k => { st.season = k; applyLook(); });
 mkChips('cTod', TOD_PRESETS, k => { st.tod = k === 'film' ? null : +k; applyLook(); });
+mkChips('cView', [['solid', 'Solid'], ['wire', 'Wireframe'], ['xray', 'X-ray']], k => { viewMode = k; applyView(); });
 mkChips('cQual', Object.keys(QUAL).map(k => [k, k]), k => { st.quality = k; resize(); });
 $('tod').oninput = e => { st.tod = +e.target.value; applyLook(); refreshChips(); };
 
