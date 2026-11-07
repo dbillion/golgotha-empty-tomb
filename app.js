@@ -266,10 +266,10 @@ function applyTime() {
   mixer.setTime(t);
   if (cur !== 'tomb') return;
   const burst = ramp(t, 2.6, 4.6);
-  lights.tomb.intensity = 4 + 90 * ramp(t, 2, 3.8);
-  lights.burst.intensity = 4000 * ramp(t, 2.5, 3.6) * (1 - 0.45 * ramp(t, 4.5, 6));
-  lights.sun.intensity = LOOK.sunI * (0.8 + 0.9 * burst);
-  lights.hemi.intensity = LOOK.hemiI * (0.6 + 0.9 * burst);
+  lights.tomb.intensity = 3 + 12 * ramp(t, 2, 3.8);
+  lights.burst.intensity = 60 * ramp(t, 2.5, 3.6) * (1 - 0.45 * ramp(t, 4.5, 6));
+  lights.sun.intensity = LOOK.sunI * (0.8 + 0.4 * burst);
+  lights.hemi.intensity = LOOK.hemiI * (0.6 + 0.5 * burst);
   const op = 0.11 * ramp(t, 2.6, 3.6) * (1 - 0.35 * ramp(t, 4.5, 8)) * (1 + 0.25 * LOOK.night);
   rays.forEach(r => r.material.opacity = op);
 }
