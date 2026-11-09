@@ -1,27 +1,9 @@
-# Golgotha and the Empty Tomb: interactive 3D scenes
+# Sacred Places in 3D
 
-Two scenes modelled and animated in Blender, exported to glTF and shown in the browser with three.js.
+Three scenes modelled and animated in Blender, exported to glTF (meshopt-compressed) and shown in the browser with three.js.
 
-- **Golgotha**: the three crosses (Jesus between the two thieves), soldiers, the road and the city wall.
-- **The Empty Tomb**: the stone rolled away at dawn, the soldiers falling back and running.
+- **Tabernacle**: courtyard, altar, laver, the Tent with lampstand and the Ark, the camp of the tribes.
+- **Solomon's Temple**: porch with Jachin and Boaz, Holy Place, Bronze Sea, the Ark between the cherubim.
+- **Herod's Temple**: Temple Mount, Royal Stoa, courts, Nicanor Gate, gold sanctuary, Antonia.
 
-## Controls (HUD)
-
-- **Weather**: as filmed, clear, cloudy, rain, storm (lightning and thunder), fog, dust wind, snow
-- **Season**: spring (Passover), summer, autumn, winter. Re-tints ground, foliage and sunlight
-- **Time of day**: slider from 00:00 to 24:00 moves the sun and sky, with stars at night
-- **Camera**: the film camera, free orbit and per-scene presets, optional auto-orbit
-- Clouds and god-ray toggles, generated ambient sound (no audio files), quality presets
-- Screenshot, fullscreen, and a shareable link that stores scene, weather, season and time
-
-Responsive from small phones to ultrawide screens. On narrow screens the HUD is a bottom sheet, and portrait
-screens widen the field of view so nothing is cropped.
-
-## Stack
-
-Static site, no build step: three.js 0.160 (ES modules from a CDN), GLB assets exported from Blender.
-Everything is open source and self-hostable. Copy the folder to any static host.
-
-```
-python3 -m http.server 8765   # then open http://localhost:8765
-```
+Light rays radiate from above the mercy seat in the Tabernacle and in Solomon's Temple (toggle: Ark light rays).

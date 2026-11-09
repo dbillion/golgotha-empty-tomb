@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e0d0c">
-<meta name="description" content="Golgotha and the Empty Tomb: two Blender-built scenes you can explore in 3D, with weather, season and time-of-day controls.">
-<title>Golgotha and the Empty Tomb | Interactive 3D scenes</title>
+<meta name="description" content="The Tabernacle, Solomon's Temple and Herod's Temple: five Blender-built scenes you can explore in 3D, with weather, season and time-of-day controls.">
+<title>Sacred Places in 3D | Tabernacle, Solomon's Temple and Herod's Temple</title>
 <link rel="stylesheet" href="style.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
@@ -16,10 +16,11 @@
     <video id="vid" controls loop muted playsinline></video>
 
     <header id="top">
-      <h1>Golgotha <span>&amp; the Empty Tomb</span></h1>
-      <div class="group" role="group" aria-label="Scene">
-        <button id="bG" class="on">Golgotha</button>
-        <button id="bT">Empty Tomb</button>
+      <h1>Sacred Places <span>in 3D</span></h1>
+      <div class="group" id="scenes" role="group" aria-label="Scene">
+        <button id="bTab" class="on">Tabernacle</button>
+        <button id="bSol">Solomon's Temple</button>
+        <button id="bHer">Herod's Temple</button>
       </div>
       <div class="group" role="group" aria-label="View mode">
         <button id="bV3" class="on">3D</button>
@@ -68,7 +69,7 @@
     <section>
       <h2>Scene</h2>
       <label class="row"><input type="checkbox" id="kClouds" checked> Clouds</label>
-      <label class="row" id="rowRays"><input type="checkbox" id="kRays" checked> God rays</label>
+      <label class="row" id="rowRays"><input type="checkbox" id="kRays" checked> Ark light rays</label>
       <label class="row"><input type="checkbox" id="kSound"> Ambient sound (generated, no files)</label>
       <h2>Quality</h2>
       <div class="chips" id="cQual"></div>

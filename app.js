@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = id => document.getElementById(id);
@@ -11,19 +12,26 @@ const COARSE = matchMedia('(pointer:coarse)').matches;
 
 /* ---------- authored scene settings (the "as filmed" look) ---------- */
 const SCENES = {
-  golgotha: {
-    label: 'Golgotha', glb: 'assets/golgotha.glb', mp4: 'assets/golgotha.mp4', hour: 15,
-    sky: ['#101216', '#3a3430', '#8a6a4a'], fog: [0x2a2622, 0.0016],
-    sun: { c: 0xffe3b8, i: 1.5, p: [30, 60, 40] }, hemi: [0x8a8a92, 0x3a3022, 0.9],
-    cams: { 'Cross close': [[9, 7, 24], [0, 9, 0]], 'Aerial': [[52, 62, 74], [0, 10, 0]], 'From the city': [[-44, 14, 26], [0, 10, 0]] },
-    orbit: [[38, 34, 62], [0, 12, 0]],
+  tabernacle: {
+    label: "Tabernacle", glb: 'assets/tabernacle.glb', mp4: 'assets/tabernacle.mp4', hour: 11,
+    sky: ['#6f9cd0', '#bcd3e6', '#f0e2c4'], fog: [0xe0d2b4, 0.0009],
+    sun: { c: 0xfff0d0, i: 2.2, p: [40, 90, 30] }, hemi: [0xdbe6f5, 0xb09a72, 1.9],
+    cams: { 'Courtyard': [[-36, 12, 18], [0, 1.5, 0]], 'Altar': [[-20, 5, 10], [-8, 1, 0]], 'The Tent': [[-4, 7, 15], [12, 2, 0]], 'Camp aerial': [[-70, 60, 70], [5, 0, 0]], 'Ark glory': [[16.5, 9, 17], [16.5, 3.5, 0]] },
+    orbit: [[-42, 28, 38], [4, 2, 0]],
   },
-  tomb: {
-    label: 'Empty Tomb', glb: 'assets/tomb.glb', mp4: 'assets/tomb_dawn_preview.mp4', hour: 6.2,
-    sky: ['#7f97b8', '#d9c4b6', '#ffbc84'], fog: [0xe0b9a0, 0.0011],
-    sun: { c: 0xffc78c, i: 1.4, p: [33, 14, 48] }, hemi: [0xb4c2d6, 0x6a5a48, 0.7],
-    cams: { 'Tomb door': [[6, 3, 13], [0, 2, 0]], 'Garden path': [[-20, 6, 42], [0, 2, 0]], 'Aerial': [[32, 46, 52], [0, 2, 0]] },
-    orbit: [[16, 10, 26], [0, 2, 6]],
+  solomon: {
+    label: "Solomon's Temple", glb: 'assets/solomon.glb', mp4: 'assets/solomon.mp4', hour: 12,
+    sky: ['#6f9cd0', '#bcd3e6', '#f0e2c4'], fog: [0xe2d6b8, 0.0007],
+    sun: { c: 0xfff0d0, i: 2.2, p: [40, 90, 30] }, hemi: [0xdbe6f5, 0xb09a72, 1.9],
+    cams: { 'Porch': [[-28, 8, 18], [-4, 6, 0]], 'Courts': [[-42, 22, 36], [-10, 3, 5]], 'Palace': [[-30, 20, 100], [12, 6, 60]], 'Aerial': [[-90, 72, 100], [0, 4, 10]], 'From the south': [[14, 18, 48], [14, 6, 0]], 'Holy of Holies': [[20.4, 3.4, 3.2], [24.5, 1.6, 0]] },
+    orbit: [[-70, 45, 75], [5, 5, 8]],
+  },
+  herod: {
+    label: "Herod's Temple", glb: 'assets/herod.glb', mp4: 'assets/herod.mp4', hour: 12,
+    sky: ['#6f9cd0', '#bcd3e6', '#f0e2c4'], fog: [0xe2d6b8, 0.0005],
+    sun: { c: 0xfff0d0, i: 2.2, p: [40, 90, 30] }, hemi: [0xdbe6f5, 0xb09a72, 1.9],
+    cams: { 'Sanctuary': [[12, 24, 22], [100, 26, 0]], 'Court of the Gentiles': [[-104, 14, 12], [-70, 2, 56]], 'Antonia': [[60, 34, -30], [130, 18, -76]], 'Aerial': [[-175, 115, 125], [40, 10, 0]] },
+    orbit: [[-150, 95, 110], [30, 15, 0]],
   },
 };
 
@@ -65,7 +73,7 @@ function skyAt(h) {
 }
 const DAY_NAMES = ['Night', 'Dawn', 'Morning', 'Midday', 'Afternoon', 'Dusk'];
 
-const st = { scene: 'golgotha', weather: 'film', season: 'film', tod: null, rays: true, clouds: true, sound: false, auto: false, cam: 'Film camera', quality: COARSE ? 'Medium' : 'High' };
+const st = { scene: 'tabernacle', weather: 'film', season: 'film', tod: null, rays: true, clouds: true, sound: false, auto: false, cam: 'Film camera', quality: COARSE ? 'Medium' : 'High' };
 const QUAL = { Low: 1, Medium: 1.5, High: 2 };
 let LOOK = null;
 
@@ -113,6 +121,7 @@ controls.enableDamping = true; controls.autoRotateSpeed = 0.6;
 let filmCam = null, filmFov = 40, mixer = null, dur = 12, t = 0, playing = true, mode3d = true, useFilm = true;
 let cur = null, root = null, lights = {}, rays = [], clouds = [], tints = [], stars = null, fx = null, flash = 0, nextBolt = 4;
 const loader = new GLTFLoader(), cache = {};
+loader.setMeshoptDecoder(MeshoptDecoder);
 const tmpV = new THREE.Vector3();
 
 /* dragging / pinching / scrolling while the film camera plays hands control to the viewer, starting from the film camera's pose */
@@ -148,6 +157,41 @@ function makeRays() {
     m.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), d); out.push(m);
   }
   return out;
+}
+
+/* ---------- Ark of the Covenant: light radiating from above the mercy seat (glTF Y-up, metres) ---------- */
+const ARK = {
+  tabernacle: { p: [16.5, 0.95, 0], L: 8, R: 0.2, glow: 2.2, light: 9 },
+  solomon:    { p: [24, 0.95, 0],   L: 17, R: 0.42, glow: 4.0, light: 14 },
+};
+function makeArk(c) {
+  const rnd = mulberry(7), out = [], P = new THREE.Vector3(...c.p);
+  const add = (d, L, R, base) => {
+    const geo = new THREE.ConeGeometry(R, L, 14, 1, true); geo.translate(0, -L / 2, 0);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffdc8c, transparent: true, opacity: base, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+    const m = new THREE.Mesh(geo, mat); m.position.copy(P); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), d.normalize());
+    m.userData.base = base; m.userData.ph = rnd() * 6; out.push(m);
+  };
+  const N = 40;
+  for (let k = 0; k < N; k++) {
+    const yaw = k / N * Math.PI * 2 + rnd() * 0.25, pit = (46 + rnd() * 42) * Math.PI / 180;
+    add(new THREE.Vector3(Math.cos(yaw) * Math.cos(pit), Math.sin(pit), Math.sin(yaw) * Math.cos(pit)), c.L * (0.55 + rnd() * 0.45), c.R * (0.5 + rnd() * 0.9), 0.05 + rnd() * 0.05);
+  }
+  add(new THREE.Vector3(0, 1, 0), c.L, c.R * 1.2, 0.1);
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,248,220,1)'); gr.addColorStop(0.3, 'rgba(255,214,130,.55)'); gr.addColorStop(1, 'rgba(255,190,90,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false, opacity: 0.9 }));
+  sp.position.copy(P); sp.scale.setScalar(c.glow); sp.userData.base = 0.9; sp.userData.ph = 1; out.push(sp);
+  return out;
+}
+/* Solomon's Temple was exported with its south wall cut down and the south roof left open; close it so the inside only shows through the door */
+function coverSolomon(r) {
+  if (r.userData.covered) return; r.userData.covered = true;
+  const mat = n => r.getObjectByName(n)?.material || new THREE.MeshStandardMaterial({ color: 0xc9b894 });
+  const box = (w, h, d, x, y, z, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.name = 'SouthCover'; r.add(o); };
+  box(29.4, 13.5, 0.9, 14.7, 6.75, 4.95, mat('TempleStone'));
+  box(29.4, 0.5, 6.1, 14.7, 13.75, 2.55, mat('RoofCedar'));
+  for (let j = 0; j < 8; j++) { const x = 2.4 + j * 3.4; box(1.15, 3.3, 0.1, x, 10.5, 5.43, mat('WindowFrames')); box(0.8, 2.9, 0.08, x, 10.5, 5.48, mat('WindowDark')); }
 }
 
 function makeStars() {
@@ -231,7 +275,7 @@ function collectTints() {
     (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
       if (seen.has(m) || !m.color) return; seen.add(m);
       const n = (m.name || '').toLowerCase();
-      const kind = /terrain|grass|soil/.test(n) ? 'ground' : /olive|leaf/.test(n) ? 'leaf' : /^rock|stone/.test(n) ? 'rock' : /cloud/.test(n) ? 'cloud' : null;
+      const kind = /terrain|grass|soil|ground|sand/.test(n) ? 'ground' : /olive|leaf/.test(n) ? 'leaf' : /^rock|stone/.test(n) ? 'rock' : /cloud/.test(n) ? 'cloud' : null;
       if (kind) tints.push({ m, base: m.color.clone(), kind, vc: m.vertexColors });
     });
   });
@@ -291,14 +335,9 @@ function buildFxIfChanged() { const k = WEATHER[st.weather].fx || null; if (k !=
 
 function applyTime() {
   mixer.setTime(t);
-  if (cur !== 'tomb') return;
-  const burst = ramp(t, 2.6, 4.6);
-  lights.tomb.intensity = 3 + 12 * ramp(t, 2, 3.8);
-  lights.burst.intensity = 40 * ramp(t, 2.5, 3.6) * (1 - 0.45 * ramp(t, 4.5, 6));
-  lights.sun.intensity = LOOK.sunI * (0.8 + 0.4 * burst);
-  lights.hemi.intensity = LOOK.hemiI * (0.6 + 0.5 * burst);
-  const op = 0.11 * ramp(t, 2.6, 3.6) * (1 - 0.35 * ramp(t, 4.5, 8)) * (1 + 0.25 * LOOK.night);
-  rays.forEach(r => r.material.opacity = op);
+  const k = performance.now() / 1000;
+  rays.forEach(r => { const o = r.userData; if (o.base !== undefined) (r.material).opacity = o.base * (0.72 + 0.28 * Math.sin(k * 1.7 + o.ph)); });
+  if (lights.ark) lights.ark.intensity = ARK[cur].light * (0.85 + 0.15 * Math.sin(k * 2.3));
 }
 
 async function load(key) {
@@ -311,15 +350,12 @@ async function load(key) {
   lights.hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1); lights.sun = new THREE.DirectionalLight(0xffffff, 1);
   scene.add(lights.hemi, lights.sun);
   stars = makeStars(); scene.add(stars);
-  if (key === 'tomb') {
-    lights.tomb = new THREE.PointLight(0xffe0a0, 0, 40, 1.4); lights.tomb.position.copy(B2T(0, 3.4, 2.5));
-    lights.burst = new THREE.SpotLight(0xffe6b0, 0, 120, 1.2, 0.9, 1.0);
-    lights.burst.position.copy(B2T(0, 0.8, 1.9)); lights.burst.target.position.copy(B2T(0, -20, 1));
-    scene.add(lights.tomb, lights.burst, lights.burst.target);
-    rays = makeRays(); rays.forEach(r => scene.add(r));
+  if (ARK[key]) {
+    const A = ARK[key]; lights.ark = new THREE.PointLight(0xffd68a, A.light, 30, 1.5); lights.ark.position.set(A.p[0], A.p[1] + 0.5, A.p[2]); scene.add(lights.ark);
+    makeArk(A).forEach(m => { scene.add(m); rays.push(m); });
   }
   const gltf = cache[key] || (cache[key] = await loader.loadAsync(S.glb));
-  root = gltf.scene; scene.add(root);
+  root = gltf.scene; scene.add(root); if (key === 'solomon') coverSolomon(root);
   filmCam = null; root.traverse(o => { if (o.isCamera && !filmCam) filmCam = o; if (/^cloud/i.test(o.name)) clouds.push(o); });
   if (filmCam) { filmFov = filmCam.fov || 40; filmCam.near = 0.05; filmCam.far = 4000; }
   collectTints(); viewMats = new Map(); applyView();
@@ -328,7 +364,7 @@ async function load(key) {
   dur = dur || 12; t = 0;
   setCam(st.cam in S.cams || st.cam === 'Film camera' || st.cam === 'Free orbit' ? st.cam : 'Film camera');
   fxKind = '\0'; applyLook(); buildCamChips(); resize(); setVideo();
-  $('rowRays').style.display = key === 'tomb' ? 'flex' : 'none';
+  $('rowRays').style.display = ARK[key] ? 'flex' : 'none';
   $('load').style.display = 'none';
 }
 
@@ -367,7 +403,7 @@ function tick() {
   const dt = Math.min(clock.getDelta(), 0.1); time += dt;
   if (playing) { t = (t + dt) % dur; $('seek').value = Math.round(t / dur * 1000); }
   applyTime();
-  if (cur !== 'tomb') lights.hemi.intensity = LOOK.hemiI;
+  lights.hemi.intensity = LOOK.hemiI;
   const W = WEATHER[st.weather];
   if (W.lightning) {
     nextBolt -= dt;
@@ -418,6 +454,7 @@ function writeHash() {
 function readHash() {
   const p = new URLSearchParams(location.hash.slice(1));
   if (SCENES[p.get('s')]) st.scene = p.get('s');
+  if (p.get('c')) st.cam = p.get('c');
   if (WEATHER[p.get('w')]) st.weather = p.get('w');
   if (SEASONS[p.get('z')]) st.season = p.get('z');
   const h = parseFloat(p.get('h')); if (!isNaN(h) && h >= 0 && h <= 24) st.tod = h;
@@ -430,10 +467,10 @@ mkChips('cView', [['solid', 'Solid'], ['wire', 'Wireframe'], ['xray', 'X-ray']],
 mkChips('cQual', Object.keys(QUAL).map(k => [k, k]), k => { st.quality = k; resize(); });
 $('tod').oninput = e => { st.tod = +e.target.value; applyLook(); refreshChips(); };
 
+const BTN = { tabernacle: 'bTab', solomon: 'bSol', herod: 'bHer' }, ALLB = Object.values(BTN);
 function tab(id, group) { group.forEach(g => $(g).classList.toggle('on', g === id)); }
-const goScene = key => { tab(key === 'golgotha' ? 'bG' : 'bT', ['bG', 'bT']); return load(key).catch(e => { $('load').style.display = 'grid'; $('load').textContent = 'Could not load the scene: ' + e.message; }); };
-$('bG').onclick = () => goScene('golgotha');
-$('bT').onclick = () => goScene('tomb');
+const goScene = key => { tab(BTN[key], ALLB); return load(key).catch(e => { $('load').style.display = 'grid'; $('load').textContent = 'Could not load the scene: ' + e.message; }); };
+Object.entries(BTN).forEach(([k, id]) => $(id).onclick = () => goScene(k));
 
 let hudWanted = innerWidth >= 900;
 function setHud(open) {
@@ -462,5 +499,5 @@ addEventListener('keydown', e => {
 });
 matchMedia('(min-width:900px)').addEventListener('change', e => { hudWanted = e.matches; if (mode3d) setHud(hudWanted); });
 
-readHash(); setHud(hudWanted); tab(st.scene === 'golgotha' ? 'bG' : 'bT', ['bG', 'bT']);
+readHash(); setHud(hudWanted); tab(BTN[st.scene], ALLB);
 load(st.scene).then(tick).catch(e => { $('load').textContent = 'Could not load the scene: ' + e.message; });

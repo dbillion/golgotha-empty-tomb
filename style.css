@@ -57,3 +57,5 @@ h2 small,h2 output{text-transform:none;letter-spacing:0;color:var(--acc);font-we
 }
 @media (min-width:2200px){:root{--hudw:clamp(420px,18vw,640px)}}
 @media (prefers-reduced-motion:reduce){#hud{transition:none}}
+
+#scenes{overflow-x:auto;max-width:100%;scrollbar-width:none}#scenes::-webkit-scrollbar{display:none}#scenes button{white-space:nowrap}
