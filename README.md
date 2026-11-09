@@ -1,4 +1,4 @@
-# Sacred Places in 3D
+# Israel Temple Places in 3D
 
 Three scenes modelled and animated in Blender, exported to glTF (meshopt-compressed) and shown in the browser with three.js.
 
