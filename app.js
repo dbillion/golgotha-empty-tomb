@@ -340,7 +340,9 @@ function applyTime() {
   if (lights.ark) lights.ark.intensity = ARK[cur].light * (0.85 + 0.15 * Math.sin(k * 2.3));
 }
 
+let loadTok = 0;
 async function load(key) {
+  const tok = ++loadTok;
   $('load').style.display = 'grid'; $('load').textContent = 'Loading scene…';
   if (root) scene.remove(root);
   rays.forEach(r => scene.remove(r)); rays = []; clouds = [];
@@ -354,7 +356,8 @@ async function load(key) {
     const A = ARK[key]; lights.ark = new THREE.PointLight(0xffd68a, A.light, 30, 1.5); lights.ark.position.set(A.p[0], A.p[1] + 0.5, A.p[2]); scene.add(lights.ark);
     makeArk(A).forEach(m => { scene.add(m); rays.push(m); });
   }
-  const gltf = cache[key] || (cache[key] = await loader.loadAsync(S.glb));
+  const gltf = await loader.loadAsync(S.glb);
+  if (tok !== loadTok) return;
   root = gltf.scene; scene.add(root); if (key === 'solomon') coverSolomon(root);
   filmCam = null; root.traverse(o => { if (o.isCamera && !filmCam) filmCam = o; if (/^cloud/i.test(o.name)) clouds.push(o); });
   if (filmCam) { filmFov = filmCam.fov || 40; filmCam.near = 0.05; filmCam.far = 4000; }

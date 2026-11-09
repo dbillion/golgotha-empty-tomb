@@ -59,3 +59,15 @@ h2 small,h2 output{text-transform:none;letter-spacing:0;color:var(--acc);font-we
 @media (prefers-reduced-motion:reduce){#hud{transition:none}}
 
 #scenes{overflow-x:auto;max-width:100%;scrollbar-width:none}#scenes::-webkit-scrollbar{display:none}#scenes button{white-space:nowrap}
+
+/* polish: press feedback, specific transitions, hover only where hover exists, text rendering */
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{transition:transform 160ms cubic-bezier(.23,1,.32,1),border-color 160ms ease-out,color 160ms ease-out,background-color 160ms ease-out}
+button:active{transform:scale(.97)}
+button.on{background:rgba(224,178,90,.1)}
+header button,footer button{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#chip,#note{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#hud{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+input[type=range]{transition:opacity 160ms ease-out}
+@media (hover:none){button:hover{border-color:var(--line)}button.on:hover{border-color:var(--acc)}}
+@media (prefers-reduced-motion:reduce){button{transition:none}button:active{transform:none}}
