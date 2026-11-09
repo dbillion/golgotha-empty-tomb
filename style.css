@@ -71,3 +71,87 @@ header button,footer button{backdrop-filter:blur(8px);-webkit-backdrop-filter:bl
 input[type=range]{transition:opacity 160ms ease-out}
 @media (hover:none){button:hover{border-color:var(--line)}button.on:hover{border-color:var(--acc)}}
 @media (prefers-reduced-motion:reduce){button{transition:none}button:active{transform:none}}
+
+/* ===== design pass: tokens, parchment + gold, serif display, one family of controls ===== */
+:root{
+  --bg:#0f0c09;--fg:#f4ead7;--mut:#bba98a;--acc:#d9a84e;--acc-hi:#f2cf85;
+  --panel:rgba(24,18,13,.86);--panel-solid:#18120d;--line:rgba(217,168,78,.26);--line-soft:rgba(244,234,215,.09);
+  --r-sm:8px;--r:12px;--r-lg:20px;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --ease:cubic-bezier(.23,1,.32,1);
+  --step-0:clamp(.84rem,.3vw + .76rem,1rem);--step-title:clamp(1.15rem,1.4vw + .75rem,2rem);
+  --hudw:clamp(300px,23vw,500px)
+}
+html,body{background:radial-gradient(120% 90% at 50% 0,#1b140d 0,var(--bg) 62%)}
+button{border-radius:var(--r);border-color:var(--line);background:var(--panel)}
+button:hover{border-color:var(--acc)}
+button:focus-visible,input:focus-visible+*,summary:focus-visible{outline:2px solid var(--acc-hi);outline-offset:2px}
+input[type=range]:focus-visible,input[type=checkbox]:focus-visible{outline:2px solid var(--acc-hi);outline-offset:3px;border-radius:6px}
+button.on{background:linear-gradient(180deg,rgba(217,168,78,.2),rgba(217,168,78,.08));border-color:var(--acc);color:var(--acc-hi);box-shadow:inset 0 1px 0 rgba(255,236,190,.18)}
+
+/* title: serif display + quiet gold accent */
+h1{font-family:var(--serif);font-size:var(--step-title);font-weight:600;letter-spacing:.005em;line-height:1.05;margin:0 clamp(8px,1.4vw,24px) 0 0;text-wrap:balance;text-shadow:0 1px 14px rgba(0,0,0,.6)}
+h1 span{font-style:italic;font-weight:400;color:var(--acc)}
+header{gap:clamp(6px,.8vw,12px) clamp(8px,1vw,14px);background:linear-gradient(rgba(12,9,6,.82),rgba(12,9,6,.45) 55%,transparent)}
+
+/* scene tabs read as one segmented control */
+#scenes,header .group{background:var(--panel);border:1px solid var(--line);border-radius:calc(var(--r) + 4px);padding:3px;gap:2px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#scenes button,header .group button{border-color:transparent;background:transparent;border-radius:var(--r);backdrop-filter:none;min-height:42px}
+#scenes button.on,header .group button.on{background:linear-gradient(180deg,rgba(217,168,78,.28),rgba(217,168,78,.12));border-color:rgba(217,168,78,.5)}
+#bHud{border-radius:calc(var(--r) + 4px)}
+
+/* side panel */
+#hud{background:linear-gradient(180deg,rgba(30,22,15,.92),rgba(18,13,9,.94));border-left:1px solid var(--line);scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.hudhead strong{font-family:var(--serif);font-size:1.35em;font-weight:600;letter-spacing:.01em}
+#hud section{border-top:1px solid var(--line-soft);padding:clamp(10px,1.2vh,16px) 0}
+h2{color:var(--mut);letter-spacing:.14em;font-size:.72em}
+.chips button{border-radius:999px;min-height:40px;padding:.35em .9em;background:rgba(244,234,215,.04);border-color:var(--line-soft)}
+.chips button:hover{border-color:var(--line)}
+.chips button.on{border-color:var(--acc)}
+.actions button{border-radius:var(--r)}
+.actions button:first-child{background:linear-gradient(180deg,rgba(217,168,78,.24),rgba(217,168,78,.1));border-color:var(--acc);color:var(--acc-hi)}
+
+/* readout chip + footer */
+#chip{border-color:var(--line);color:var(--fg);font-family:var(--serif);font-style:italic;letter-spacing:.01em;background:rgba(24,18,13,.72)}
+footer{background:linear-gradient(transparent,rgba(12,9,6,.82))}
+#time{font-family:var(--serif);color:var(--acc-hi)}
+
+/* range sliders: gold track and a real thumb, 44px hit area */
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:44px;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(90deg,rgba(217,168,78,.55),rgba(244,234,215,.18))}
+input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:linear-gradient(90deg,rgba(217,168,78,.55),rgba(244,234,215,.18))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3cf,var(--acc));border:2px solid #2a1d0c;box-shadow:0 2px 8px rgba(0,0,0,.5);transition:transform 160ms var(--ease)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3cf,var(--acc));border:2px solid #2a1d0c;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+
+/* loading + notes */
+#load{font-family:var(--serif);font-size:1.2em;font-style:italic;display:grid;place-content:center;gap:16px;justify-items:center}
+#load::before{content:"";width:34px;height:34px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--acc);animation:itp-spin 900ms linear infinite}
+@keyframes itp-spin{to{transform:rotate(360deg)}}
+#note{border:1px solid var(--line);border-radius:var(--r)}
+
+/* bottom sheet on phones: drag handle, safe areas, dvh */
+.grab{display:none}
+@media (max-width:899px){
+  #hud{border-radius:var(--r-lg) var(--r-lg) 0 0;max-height:62dvh;box-shadow:0 -18px 50px rgba(0,0,0,.55);padding-top:0;overscroll-behavior:contain;transition:transform .28s var(--ease),visibility 0s linear 0s}
+  #hud.closed{transition:transform .28s var(--ease),visibility 0s linear .28s}
+  #hud.dragging{transition:none}
+  .grab{display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:2;height:28px;margin:0 calc(-1*var(--pad));cursor:grab;touch-action:none;background:linear-gradient(rgba(30,22,15,.98),rgba(30,22,15,.7));border-radius:var(--r-lg) var(--r-lg) 0 0}
+  .grab::before{content:"";width:44px;height:5px;border-radius:5px;background:var(--line);}
+  header{padding-bottom:calc(var(--pad) + 4px)}
+  #scenes{order:3;flex:1 1 100%}
+  #scenes button{flex:1 0 auto}
+}
+@media (max-width:520px){
+  :root{--step-title:1.2rem}
+  header{gap:6px}
+  .group button,#bHud{padding:.45em .75em}
+}
+/* very wide and tall screens: let the interface breathe instead of stretching */
+@media (min-width:1800px){:root{--pad:clamp(18px,1.1vw,32px)}.chips button{font-size:.95em}}
+@media (min-width:2200px){html,body{font-size:clamp(18px,.7vw + 8px,26px)}}
+@media (prefers-reduced-motion:reduce){#hud,#hud.closed{transition:none}#load::before{animation-duration:2.4s}input[type=range]::-webkit-slider-thumb{transition:none}}
+/* chip sits under the header wherever it wraps (set from app.js) */
+#chip{top:calc(var(--hdr,56px) + 6px)}
+@media (max-width:899px){#chip{top:calc(var(--hdr,100px) + 6px)}}
+@media (max-width:520px){#chip{top:calc(var(--hdr,100px) + 6px)}}

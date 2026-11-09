@@ -3,8 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0e0d0c">
-<meta name="description" content="The Tabernacle, Solomon's Temple and Herod's Temple: five Blender-built scenes you can explore in 3D, with weather, season and time-of-day controls.">
+<meta name="theme-color" content="#0f0c09">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Israel Temple Places in 3D">
+<meta property="og:description" content="Walk through the Tabernacle, Solomon's Temple and Herod's Temple in 3D, with weather, seasons and time of day.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2318120d'/%3E%3Cpath d='M12 50V28l20-14 20 14v22h-9V32L32 22 21 32v18z' fill='%23d9a84e'/%3E%3Crect x='28' y='36' width='8' height='14' fill='%23f2cf85'/%3E%3C/svg%3E">
+<meta name="description" content="The Tabernacle, Solomon's Temple and Herod's Temple: three Blender-built scenes you can explore in 3D, with weather, season and time-of-day controls.">
 <title>Israel Temple Places in 3D | Tabernacle, Solomon's Temple and Herod's Temple</title>
 <link rel="stylesheet" href="style.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
@@ -42,6 +46,7 @@
   </main>
 
   <aside id="hud" aria-label="Environment controls">
+    <div class="grab" id="grab" role="button" tabindex="0" aria-label="Drag down to close controls"></div>
     <div class="hudhead"><strong>Environment</strong><button id="bReset" class="ghost">Reset all</button></div>
 
     <section>
