@@ -30,6 +30,7 @@
         <button id="bV3" class="on">3D</button>
         <button id="bVV">Video</button>
       </div>
+      <button id="bMove" aria-pressed="false" title="Rearrange the screen (M)">Move</button>
       <button id="bHud" class="on" aria-expanded="true" aria-controls="hud">Controls</button>
     </header>
 
@@ -70,6 +71,7 @@
       <h2>Camera</h2>
       <div class="chips" id="cCam"></div>
       <label class="row"><input type="checkbox" id="kAuto"> Slow auto-orbit</label>
+      <label class="row"><input type="checkbox" id="kInv"> Invert drag direction</label>
     </section>
     <section>
       <h2>Scene</h2>
@@ -84,9 +86,10 @@
       <button id="bFull">Fullscreen</button>
       <button id="bLink">Copy link</button>
     </section>
-    <p class="fine">Drag to look around, pinch or scroll to zoom. Keys: Space play/pause, H hide controls, F fullscreen.</p>
+    <p class="fine">Drag to orbit, right-drag or two fingers to pan, scroll or pinch to zoom. Keys: W A S D or arrows move, Q E down/up (Shift = fast), Space play/pause, H hide controls, F fullscreen, M move parts of the screen.</p>
   </aside>
 </div>
 <script type="module" src="app.js"></script>
+<script type="module" src="ui.js"></script>
 </body>
 </html>

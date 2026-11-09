@@ -155,3 +155,13 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
 #chip{top:calc(var(--hdr,56px) + 6px)}
 @media (max-width:899px){#chip{top:calc(var(--hdr,100px) + 6px)}}
 @media (max-width:520px){#chip{top:calc(var(--hdr,100px) + 6px)}}
+
+/* ===== orbit + rearrange ===== */
+footer{pointer-events:none}footer>*{pointer-events:auto}          /* the bottom band no longer swallows drags meant for the 3D view */
+#bMove{margin-left:auto;border-radius:calc(var(--r) + 4px)}#bMove+#bHud{margin-left:0}
+@media (min-width:900px){#hud.floating{position:fixed;top:0;right:0;height:100%;box-shadow:0 10px 50px rgba(0,0,0,.6);border:1px solid var(--line);border-radius:var(--r-lg)}.hudhead strong{cursor:move;touch-action:none;user-select:none}}
+#arrangeBar{position:fixed;left:50%;top:42%;transform:translateX(-50%);z-index:40;display:none;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:92vw;padding:10px 14px;background:var(--panel);border:1px solid var(--acc);border-radius:var(--r-lg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);text-align:center;font-family:var(--serif);font-style:italic}
+body.arrange #arrangeBar{display:flex}
+body.arrange [data-move]{outline:2px dashed var(--acc-hi);outline-offset:3px;cursor:move;touch-action:none;user-select:none;-webkit-user-select:none;pointer-events:auto!important}
+body.arrange [data-move] *{pointer-events:none!important}
+body.arrange [data-move].moving{outline-style:solid;opacity:.85}

@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { buildArk } from './ark.js';
 
 const $ = id => document.getElementById(id);
 const clamp01 = x => Math.min(1, Math.max(0, x));
@@ -117,23 +119,121 @@ stage.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const orbitCam = new THREE.PerspectiveCamera(55, 1, 0.1, 4000);
 const controls = new OrbitControls(orbitCam, renderer.domElement);
-controls.enableDamping = true; controls.autoRotateSpeed = 0.6;
 let filmCam = null, filmFov = 40, mixer = null, dur = 12, t = 0, playing = true, mode3d = true, useFilm = true;
 let cur = null, root = null, lights = {}, rays = [], clouds = [], tints = [], stars = null, fx = null, flash = 0, nextBolt = 4;
 const loader = new GLTFLoader(), cache = {};
 loader.setMeshoptDecoder(MeshoptDecoder);
 const tmpV = new THREE.Vector3();
 
+/* ---- orbit feel: natural 3D navigation (Blender/Sketchfab standard) ---- */
+let orbitFov = 55;
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.autoRotateSpeed = 0.6;
+controls.screenSpacePanning = true;
+controls.zoomToCursor = false; // keep pivot locked to focal point so wheel & pinch don't drift target into empty space
+controls.enableZoom = true;
+controls.zoomSpeed = 1.2;
+controls.enablePan = true;
+controls.panSpeed = 1.0;
+controls.rotateSpeed = 0.8;
+controls.minDistance = 0.1;    // allow free close-up inspection of details
+controls.maxDistance = 2500;   // allow wide aerial overview
+controls.maxPolarAngle = Math.PI * 0.492; // stay above ground level cleanly without breaking spherical coordinates
+controls.minPolarAngle = 0.01;            // avoid polar gimbal flip
+controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+
+const ray = new THREE.Raycaster();
+function getSceneMeshes() {
+  const meshes = [];
+  if (root) {
+    root.traverse(o => {
+      if (o.isMesh && o.visible && !/^cloud/i.test(o.name) && !rays.includes(o)) meshes.push(o);
+    });
+  }
+  return meshes;
+}
+
+function pivotAhead(p, f) {   // distance to the first surface the film camera is looking at
+  const meshes = getSceneMeshes();
+  ray.set(p, f); ray.far = 400;
+  const hit = ray.intersectObjects(meshes, false)[0];
+  return hit ? Math.min(Math.max(hit.distance, 4), 120) : 30;
+}
+
 /* dragging / pinching / scrolling while the film camera plays hands control to the viewer, starting from the film camera's pose */
 function takeControl() {
+  if (document.body.classList.contains('arrange')) return;
   if (!useFilm || !mode3d || !filmCam) return;
   const p = new THREE.Vector3(), q = new THREE.Quaternion(), f = new THREE.Vector3(0, 0, -1);
-  filmCam.getWorldPosition(p); filmCam.getWorldQuaternion(q); f.applyQuaternion(q);
-  orbitCam.position.copy(p); controls.target.copy(p).addScaledVector(f, 12);
+  filmCam.getWorldPosition(p); filmCam.getWorldQuaternion(q); f.applyQuaternion(q).normalize();
+  let d = 30; try { d = pivotAhead(p, f); } catch (e) { console.warn('pivot ray failed', e); }
+  orbitFov = filmFov;
+  orbitCam.position.copy(p);
+  controls.target.copy(p).addScaledVector(f, d);
   useFilm = false; st.cam = 'Free orbit'; controls.update(); resize(); refreshChips();
 }
 renderer.domElement.addEventListener('pointerdown', takeControl, true);
 renderer.domElement.addEventListener('wheel', takeControl, { capture: true, passive: true });
+
+/* double-click / double-tap to refocus orbit target on clicked surface */
+let lastTapTime = 0;
+function recenterOnPoint(clientX, clientY) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  const mouse = new THREE.Vector2(
+    ((clientX - rect.left) / rect.width) * 2 - 1,
+    -((clientY - rect.top) / rect.height) * 2 + 1
+  );
+  ray.setFromCamera(mouse, orbitCam);
+  const meshes = getSceneMeshes();
+  const hits = ray.intersectObjects(meshes, false);
+  if (hits.length > 0) {
+    const hitPoint = hits[0].point;
+    if (useFilm) takeControl();
+    // Smoothly shift target to hit point preserving distance vector
+    const offset = orbitCam.position.clone().sub(controls.target);
+    controls.target.copy(hitPoint);
+    orbitCam.position.copy(hitPoint).add(offset);
+    controls.update();
+  }
+}
+
+renderer.domElement.addEventListener('dblclick', (e) => {
+  recenterOnPoint(e.clientX, e.clientY);
+});
+
+renderer.domElement.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (e.changedTouches.length === 1 && now - lastTapTime < 300) {
+    const touch = e.changedTouches[0];
+    recenterOnPoint(touch.clientX, touch.clientY);
+  }
+  lastTapTime = now;
+}, { passive: true });
+/* keyboard flight: W A S D / arrows move, Q down, E up, Shift = fast */
+const keysDown = new Set(), mv = new THREE.Vector3(), mf = new THREE.Vector3(), mr = new THREE.Vector3();
+const FLY = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+addEventListener('keydown', e => {
+  if (!FLY.has(e.code) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') return;
+  if (!mode3d || document.body.classList.contains('arrange')) return;
+  e.preventDefault(); if (useFilm) takeControl(); keysDown.add(e.code);
+});
+addEventListener('keyup', e => keysDown.delete(e.code)); addEventListener('blur', () => keysDown.clear());
+function flyKeys(dt) {
+  if (!keysDown.size || useFilm) return;
+  const k = c => keysDown.has(c) ? 1 : 0;
+  const fwd = Math.max(k('KeyW'), k('ArrowUp')) - Math.max(k('KeyS'), k('ArrowDown'));
+  const side = Math.max(k('KeyD'), k('ArrowRight')) - Math.max(k('KeyA'), k('ArrowLeft'));
+  const up = k('KeyE') - k('KeyQ');
+  mf.set(0, 0, -1).applyQuaternion(orbitCam.quaternion); mf.y = 0;
+  if (mf.lengthSq() < 1e-6) mf.set(0, 0, -1); mf.normalize();
+  mr.crossVectors(mf, orbitCam.up).normalize();
+  const sp = Math.max(6, orbitCam.position.distanceTo(controls.target) * 0.6) * (k('ShiftLeft') || k('ShiftRight') ? 3 : 1) * dt;
+  mv.set(0, 0, 0).addScaledVector(mf, fwd * sp).addScaledVector(mr, side * sp).addScaledVector(orbitCam.up, up * sp);
+  orbitCam.position.add(mv); controls.target.add(mv);
+}
 window.viewer = { orbitCam, controls, st };
 
 function skyTexture(cols) {
@@ -183,6 +283,16 @@ function makeArk(c) {
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false, opacity: 0.9 }));
   sp.position.copy(P); sp.scale.setScalar(c.glow); sp.userData.base = 0.9; sp.userData.ph = 1; out.push(sp);
   return out;
+}
+/* Tabernacle: swap the exported box-and-slab Ark for the detailed one (ark.js); the GLB itself is untouched */
+let arkEnv = null;
+function upgradeArk(r) {
+  if (r.userData.arkUpgraded) return; r.userData.arkUpgraded = true;
+  if (!arkEnv) { const pm = new THREE.PMREMGenerator(renderer); arkEnv = pm.fromScene(new RoomEnvironment(), 0.04).texture; pm.dispose(); }
+  const OLD = /^(ArkBody|ArkCrown|ArkFoot|ArkPole|ArkRing|MercySeat|CherubBody|CherubHead|CherubWing|CherubWingTip)(\.\d+)?$/;
+  const foot = r.getObjectByName('ArkFoot'), base = foot ? new THREE.Box3().setFromObject(foot).min.y : 0.08;
+  r.traverse(o => { if (OLD.test(o.name)) o.visible = false; });
+  const A = buildArk(arkEnv, base); A.group.position.set(ARK.tabernacle.p[0], 0, ARK.tabernacle.p[2]); r.add(A.group);
 }
 /* Solomon's Temple was exported with its south wall cut down and the south roof left open; close it so the inside only shows through the door */
 function coverSolomon(r) {
@@ -359,6 +469,7 @@ async function load(key) {
   const gltf = await loader.loadAsync(S.glb);
   if (tok !== loadTok) return;
   root = gltf.scene; scene.add(root); if (key === 'solomon') coverSolomon(root);
+  if (key === 'tabernacle') upgradeArk(root);
   filmCam = null; root.traverse(o => { if (o.isCamera && !filmCam) filmCam = o; if (/^cloud/i.test(o.name)) clouds.push(o); });
   if (filmCam) { filmFov = filmCam.fov || 40; filmCam.near = 0.05; filmCam.far = 4000; }
   collectTints(); viewMats = new Map(); applyView();
@@ -375,7 +486,7 @@ function setCam(name) {
   st.cam = name; const S = SCENES[cur];
   if (name === 'Film camera') useFilm = true;
   else {
-    useFilm = false; const p = name === 'Free orbit' ? S.orbit : S.cams[name] || S.orbit;
+    useFilm = false; orbitFov = 55; const p = name === 'Free orbit' ? S.orbit : S.cams[name] || S.orbit;
     orbitCam.position.set(...p[0]); controls.target.set(...p[1]); controls.update();
   }
   resize(); refreshChips();
@@ -386,7 +497,7 @@ function fitFov(base, aspect) { const ref = 16 / 9; if (aspect >= ref) return ba
 function resize() {
   const w = Math.max(1, stage.clientWidth), h = Math.max(1, stage.clientHeight), a = w / h;
   renderer.setPixelRatio(Math.min(devicePixelRatio, QUAL[st.quality])); renderer.setSize(w, h, false);
-  orbitCam.aspect = a; orbitCam.fov = fitFov(55, a); orbitCam.updateProjectionMatrix();
+  orbitCam.aspect = a; orbitCam.fov = fitFov(orbitFov, a); orbitCam.updateProjectionMatrix();
   if (filmCam) { filmCam.aspect = a; filmCam.fov = fitFov(filmFov, a); filmCam.updateProjectionMatrix(); }
 }
 new ResizeObserver(resize).observe(stage);
@@ -415,7 +526,14 @@ function tick() {
     const f = flash > 0.6 ? 1 : flash > 0.4 ? 0.25 : flash;
     lights.hemi.intensity += 3.2 * f; renderer.toneMappingExposure = 1 + 1.2 * f;
   } else renderer.toneMappingExposure = 1;
-  controls.autoRotate = st.auto && !useFilm; controls.update();
+  flyKeys(dt);
+  controls.autoRotate = st.auto && !useFilm;
+  controls.update();
+  if (!useFilm && orbitCam.position.y < 0.4) {
+    const dy = 0.4 - orbitCam.position.y;
+    orbitCam.position.y = 0.4;
+    controls.target.y += dy;
+  }
   const cam = useFilm && filmCam ? filmCam : orbitCam;
   updateFx(dt, time, cam);
   if (stars) { cam.getWorldPosition(tmpV); stars.position.copy(tmpV); }
@@ -495,6 +613,9 @@ $('bV3').onclick = () => { mode3d = true; tab('bV3', ['bV3', 'bVV']); $('vid').p
 $('bVV').onclick = () => { mode3d = false; tab('bVV', ['bV3', 'bVV']); $('stage').style.display = 'none'; $('vid').style.display = 'block'; $('vid').play().catch(() => {}); $('foot').style.display = 'none'; $('bHud').style.display = 'none'; $('chip').style.display = 'none'; setHud(false); };
 $('bPlay').onclick = () => { playing = !playing; $('bPlay').textContent = playing ? 'Pause' : 'Play'; };
 $('seek').oninput = e => { t = e.target.value / 1000 * dur; playing = false; $('bPlay').textContent = 'Play'; };
+try { st.invert = localStorage.getItem('itp-invert') === '1'; } catch { st.invert = false; }
+$('kInv').checked = !!st.invert; controls.rotateSpeed = st.invert ? -0.8 : 0.8;
+$('kInv').onchange = e => { st.invert = e.target.checked; controls.rotateSpeed = st.invert ? -0.8 : 0.8; try { localStorage.setItem('itp-invert', st.invert ? '1' : '0'); } catch {} };
 $('kAuto').onchange = e => { st.auto = e.target.checked; if (st.auto && useFilm) setCam('Free orbit'); };
 $('kClouds').onchange = e => { st.clouds = e.target.checked; applyLook(); };
 $('kRays').onchange = e => { st.rays = e.target.checked; applyLook(); };
