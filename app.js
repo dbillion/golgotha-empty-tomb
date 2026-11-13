@@ -25,8 +25,8 @@ const SCENES = {
     label: "Solomon's Temple", glb: 'assets/solomon.glb', mp4: 'assets/solomon.mp4', hour: 12,
     sky: ['#6f9cd0', '#bcd3e6', '#f0e2c4'], fog: [0xe2d6b8, 0.0007],
     sun: { c: 0xfff0d0, i: 2.2, p: [40, 90, 30] }, hemi: [0xdbe6f5, 0xb09a72, 1.9],
-    cams: { 'Porch': [[-28, 8, 18], [-4, 6, 0]], 'Courts': [[-42, 22, 36], [-10, 3, 5]], 'Palace': [[-30, 20, 100], [12, 6, 60]], 'Aerial': [[-90, 72, 100], [0, 4, 10]], 'From the south': [[14, 18, 48], [14, 6, 0]], 'Holy of Holies': [[20.4, 3.4, 3.2], [24.5, 1.6, 0]] },
-    orbit: [[-70, 45, 75], [5, 5, 8]],
+    cams: { 'Porch': [[0, 10, 25], [0, 6, 0]], 'Courts': [[-32, 18, 16], [0, 3, -8]], 'Palace': [[0, 15, -65], [0, 4, -48]], 'Aerial': [[-75, 72, 95], [0, 3, -7]], 'From the south': [[24, 18, 42], [14, 6, 0]], 'Holy of Holies': [[6, 5, -31], [0, 3, -24]] },
+    orbit: [[-70, 45, 75], [0, 4, -8]],
   },
   herod: {
     label: "Herod's Temple", glb: 'assets/herod.glb', mp4: 'assets/herod.mp4', hour: 12,
@@ -149,7 +149,7 @@ function getSceneMeshes() {
   const meshes = [];
   if (root) {
     root.traverse(o => {
-      if (o.isMesh && o.visible && !/^cloud/i.test(o.name) && !rays.includes(o)) meshes.push(o);
+      if (o.isMesh && o.visible && !/^(cloud|glory cloud)/i.test(o.name) && !rays.includes(o)) meshes.push(o);
     });
   }
   return meshes;
@@ -262,7 +262,7 @@ function makeRays() {
 /* ---------- Ark of the Covenant: light radiating from above the mercy seat (glTF Y-up, metres) ---------- */
 const ARK = {
   tabernacle: { p: [16.5, 0.95, 0], L: 8, R: 0.2, glow: 2.2, light: 9 },
-  solomon:    { p: [24, 0.95, 0],   L: 17, R: 0.42, glow: 4.0, light: 14 },
+  solomon:    { p: [0, 3.7, -24], L: 7, R: 0.22, glow: 2.5, light: 7 },
 };
 function makeArk(c) {
   const rnd = mulberry(7), out = [], P = new THREE.Vector3(...c.p);
@@ -468,9 +468,9 @@ async function load(key) {
   }
   const gltf = await loader.loadAsync(S.glb);
   if (tok !== loadTok) return;
-  root = gltf.scene; scene.add(root); if (key === 'solomon') coverSolomon(root);
+  root = gltf.scene; scene.add(root);
   if (key === 'tabernacle') upgradeArk(root);
-  filmCam = null; root.traverse(o => { if (o.isCamera && !filmCam) filmCam = o; if (/^cloud/i.test(o.name)) clouds.push(o); });
+  filmCam = null; root.traverse(o => { if (o.isCamera && !filmCam) filmCam = o; if (/^(cloud|glory cloud)/i.test(o.name)) clouds.push(o); });
   if (filmCam) { filmFov = filmCam.fov || 40; filmCam.near = 0.05; filmCam.far = 4000; }
   collectTints(); viewMats = new Map(); applyView();
   mixer = new THREE.AnimationMixer(root);
